@@ -57,27 +57,51 @@ export function SakhiBlock({ onOpenJournal, currentPhase }: SakhiBlockProps) {
       : 'How should I nurture myself?',
   ];
 
-  const handleSend = () => {
+  const handleSend = async () => {
+    console.log("HANDLE SEND TRIGGERED");
+
     if (!input.trim()) return;
+
+    const userText = input;
 
     const newMessage: Message = {
       role: 'user',
-      text: input,
+      text: userText,
       timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, newMessage]);
     setInput('');
 
-    setTimeout(() => {
-      const response: Message = {
+    try {
+      const res = await fetch("https://your-vercel-app.vercel.app/api/sakhi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userText,
+          phase: currentPhase,
+          history: messages.slice(-6) // short context window
+        })
+      });
+
+      const data = await res.json();
+
+      const sakhiReply: Message = {
         role: 'sakhi',
-        text: 'I hear you. Your feelings are valid. Would you like comfort, grounding, or reflection right now?',
+        text: data.reply,
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, response]);
-    }, 900);
+      setMessages(prev => [...prev, sakhiReply]);
+    } catch (err) {
+      const fallback: Message = {
+        role: 'sakhi',
+        text: "I'm here, but something feels quiet on my side. Try again gently.",
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, fallback]);
+    }
   };
 
   return (
@@ -159,7 +183,10 @@ export function SakhiBlock({ onOpenJournal, currentPhase }: SakhiBlockProps) {
           />
 
           <button
-            onClick={handleSend}
+            onClick={() => {
+              console.log("BUTTON CLICKED");
+              handleSend();
+            }}
             className="px-6 py-3 rounded-full bg-white/10 border border-white/20"
             style={{ color: 'var(--kamakhya-moon-glow)' }}
           >
