@@ -11,20 +11,20 @@ function App() {
       {entered ? (
         <motion.div
           key="canvas"
+          className="min-h-screen"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.9, ease: "easeOut" }}
         >
           <MainCanvas />
         </motion.div>
       ) : (
         <motion.div
           key="auth"
+          className="min-h-screen"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.9, ease: "easeOut" }}
         >
           <AuthScreen onSubmit={() => setEntered(true)} />
         </motion.div>
