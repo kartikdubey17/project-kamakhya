@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { TopCycleBand } from "../components/TopCycleBand";
 import { MoodBlock } from "../components/MoodBlock";
 import { ExercisesBlock } from "../components/ExercisesBlock";
@@ -86,10 +85,7 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
     } else {
       phaseLabel = phase + " phase";
     }
-
-    /* -------- relative moon strip -------- */
-
-    const moons = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"];
+  
 
     const getMoon = (d: number) => {
       if (d <= periodDuration) return "🌑";
@@ -132,7 +128,7 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
 
   const cycleData = calculateCycleData();
 
-  const handleMoodLog = (m: string, f: string, t: string[]) => {
+  const handleMoodLog = (m: string, _f: string, t: string[]) => {
     setJournalEntries([
       { date: new Date(), type: "mood", content: m, tags: t },
       ...journalEntries,
