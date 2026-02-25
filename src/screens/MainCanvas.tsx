@@ -89,7 +89,7 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
 
     const getMoon = (d: number) => {
       if (d <= periodDuration) return "🌑";
-      if (d < ovulationDay - 2) return "🌒";
+      if (d < ovulationDay - 3) return "🌒";
       if (d < ovulationDay) return "🌓";
       if (d === ovulationDay) return "🌕";
       if (d < ovulationDay + 4) return "🌖";
