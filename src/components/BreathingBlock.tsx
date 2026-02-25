@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { logBreathingSession } from "../lib/memory";
 
 export function BreathingBlock() {
   const [isActive, setIsActive] = useState(false);
@@ -11,6 +12,7 @@ export function BreathingBlock() {
     if (!isActive) return;
 
     if (count >= 10) {
+      logBreathingSession("guided-breathing");   // ⭐ ONLY addition
       setFinished(true);
       setIsActive(false);
       return;
@@ -32,11 +34,12 @@ export function BreathingBlock() {
     setPhase("in");
     setCount(0);
   };
+
   const stop = () => {
-  setIsActive(false);
-  setFinished(false);
-  setCount(0);
-  setPhase("in");
+    setIsActive(false);
+    setFinished(false);
+    setCount(0);
+    setPhase("in");
   };
 
   return (
@@ -115,7 +118,6 @@ export function BreathingBlock() {
                     Cycle {count + 1} / 10
                   </p>
 
-                  {/* 👇 ADD HERE */}
                   <button
                     onClick={stop}
                     className="mt-4 px-5 py-2 rounded-full bg-white/10 backdrop-blur-sm"

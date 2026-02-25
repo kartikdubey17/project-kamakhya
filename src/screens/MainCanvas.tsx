@@ -5,6 +5,7 @@ import { ExercisesBlock } from "../components/ExercisesBlock";
 import { SakhiBlock } from "../components/SakhiBlock";
 import { JournalPanel } from "../components/JournalPanel";
 import { BreathingBlock } from "../components/BreathingBlock";
+import { getTodayMemory } from "../lib/memory";
 
 interface UserData {
   name: string;
@@ -135,12 +136,36 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
     ]);
   };
 
+  const today = getTodayMemory();
+
+      const entries = [
+        ...today.journal.map((j: any) => ({
+          date: new Date(j.time),
+          type: "mood",
+          content: j.text,
+        })),
+
+        ...today.breathing.map((b: any) => ({
+          date: new Date(b.time),   // ⭐ lowercase fixed
+          type: "ritual",
+          content: "Completed a calming breathing ritual 🌙",
+        })),
+      ];
+
+      
+
   return (
     <div className="min-h-screen p-6 bg-purple-950">
       <div className="max-w-2xl mx-auto space-y-6">
         <TopCycleBand
           cycleData={cycleData}
           onEditPeriod={() => setIsEditOpen(true)}
+        />
+
+        <JournalPanel
+          isOpen={isJournalOpen}
+          onClose={() => setIsJournalOpen(false)}
+          entries={entries}
         />
 
         <div className="grid grid-cols-2 gap-4">
@@ -155,12 +180,6 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
           currentPhase={cycleData.phase}
         />
       </div>
-
-      <JournalPanel
-        isOpen={isJournalOpen}
-        onClose={() => setIsJournalOpen(false)}
-        entries={journalEntries}
-      />
 
       {isEditOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">

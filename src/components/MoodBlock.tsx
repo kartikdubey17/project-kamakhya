@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from 'lucide-react';
+import { addJournalEntry, setMood } from "../lib/memory";
 
 interface MoodBlockProps {
   onMoodLog: (mood: string, feeling: string, tags: string[]) => void;
@@ -15,9 +16,9 @@ const moods = [
 ];
 
 const emotionalTags = [
-  'cramps', 'headache', 'bloating', 'tired', 'energetic',
-  'happy', 'anxious', 'peaceful', 'irritable', 'focused',
-  'emotional', 'calm', 'restless', 'creative', 'social',
+  'cramps','headache','bloating','tired','energetic',
+  'happy','anxious','peaceful','irritable','focused',
+  'emotional','calm','restless','creative','social',
 ];
 
 export function MoodBlock({ onMoodLog }: MoodBlockProps) {
@@ -38,81 +39,82 @@ export function MoodBlock({ onMoodLog }: MoodBlockProps) {
   };
 
   const handleSave = () => {
-    if (selectedMood) {
-      onMoodLog(selectedMood, feeling, selectedTags);
-      setIsExpanded(false);
-      setSelectedMood(null);
-      setFeeling('');
-      setSelectedTags([]);
+    if (!selectedMood) return;
+
+    /* store mood */
+    setMood(selectedMood);
+
+    /* store reflection */
+    if (feeling.trim()) {
+      addJournalEntry(feeling);
     }
+
+    /* keep your existing flow */
+    onMoodLog(selectedMood, feeling, selectedTags);
+
+    setIsExpanded(false);
+    setSelectedMood(null);
+    setFeeling('');
+    setSelectedTags([]);
   };
 
   return (
     <>
-  <div
-    className="rounded-[2rem] p-[1px]"
-    style={{
-      background:
-        "linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))",
-    }}
-  >
-    <motion.div
-      className="rounded-[2rem] p-6 cursor-pointer backdrop-blur-md"
-      style={{
-        background:
-          "linear-gradient(135deg, var(--kamakhya-rose) 0%, var(--kamakhya-warm-rose) 100%)",
-      }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.2 }}
-    >
-      <p
-        className="text-sm mb-4 opacity-90"
-        style={{ color: "var(--kamakhya-text-soft)" }}
+      <div
+        className="rounded-[2rem] p-[1px]"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))",
+        }}
       >
-        How are you feeling?
-      </p>
-
-      <div className="flex justify-between gap-2">
-        {moods.map((mood) => (
-          <motion.button
-            key={mood.label}
-            onClick={() => handleMoodSelect(mood.label)}
-            className="w-12 h-12 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center
-                       hover:bg-white/50 transition-all"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+        <motion.div
+          className="rounded-[2rem] p-6 cursor-pointer backdrop-blur-md"
+          style={{
+            background:
+              "linear-gradient(135deg, var(--kamakhya-rose) 0%, var(--kamakhya-warm-rose) 100%)",
+          }}
+          whileHover={{ scale: 1.02 }}
+        >
+          <p
+            className="text-sm mb-4 opacity-90"
+            style={{ color: "var(--kamakhya-text-soft)" }}
           >
-            <span className="text-2xl">{mood.emoji}</span>
-          </motion.button>
-        ))}
+            How are you feeling?
+          </p>
+
+          <div className="flex justify-between gap-2">
+            {moods.map((mood) => (
+              <motion.button
+                key={mood.label}
+                onClick={() => handleMoodSelect(mood.label)}
+                className="w-12 h-12 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center hover:bg-white/50 transition-all"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="text-2xl">{mood.emoji}</span>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
       </div>
-    </motion.div>
-  </div>
 
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-6"
             style={{ backdropFilter: 'blur(8px)', background: 'rgba(30, 20, 40, 0.7)' }}
             onClick={() => setIsExpanded(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
               className="w-full max-w-md rounded-3xl p-8 relative"
+              onClick={(e) => e.stopPropagation()}
               style={{
                 background: 'linear-gradient(135deg, var(--kamakhya-plum) 0%, var(--kamakhya-lavender) 100%)',
               }}
             >
               <button
                 onClick={() => setIsExpanded(false)}
-                className="absolute top-6 right-6 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center
-                           hover:bg-white/30 transition-all"
+                className="absolute top-6 right-6 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
                 style={{ color: 'var(--kamakhya-text-soft)' }}
               >
                 <X className="w-4 h-4" />
@@ -128,12 +130,8 @@ export function MoodBlock({ onMoodLog }: MoodBlockProps) {
                     value={feeling}
                     onChange={(e) => setFeeling(e.target.value)}
                     placeholder="Tell me more about how you're feeling..."
-                    className="w-full px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 
-                               focus:outline-none focus:border-white/40 transition-all resize-none"
-                    style={{ 
-                      color: 'var(--kamakhya-text-soft)',
-                      minHeight: '100px'
-                    }}
+                    className="w-full px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 resize-none"
+                    style={{ color: 'var(--kamakhya-text-soft)', minHeight: 100 }}
                   />
                 </div>
 
@@ -141,6 +139,7 @@ export function MoodBlock({ onMoodLog }: MoodBlockProps) {
                   <p className="text-sm mb-3 opacity-80" style={{ color: 'var(--kamakhya-text-soft)' }}>
                     What else are you experiencing?
                   </p>
+
                   <div className="flex flex-wrap gap-2">
                     {emotionalTags.map((tag) => (
                       <button
@@ -148,8 +147,8 @@ export function MoodBlock({ onMoodLog }: MoodBlockProps) {
                         onClick={() => toggleTag(tag)}
                         className="px-4 py-2 rounded-full text-xs transition-all"
                         style={{
-                          background: selectedTags.includes(tag) 
-                            ? 'var(--kamakhya-rose)' 
+                          background: selectedTags.includes(tag)
+                            ? 'var(--kamakhya-rose)'
                             : 'rgba(255,255,255,0.15)',
                           color: 'var(--kamakhya-text-soft)',
                         }}
@@ -162,8 +161,7 @@ export function MoodBlock({ onMoodLog }: MoodBlockProps) {
 
                 <button
                   onClick={handleSave}
-                  className="w-full py-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 
-                             hover:bg-white/30 transition-all"
+                  className="w-full py-3 rounded-full bg-white/20"
                   style={{ color: 'var(--kamakhya-moon-glow)' }}
                 >
                   Save mood

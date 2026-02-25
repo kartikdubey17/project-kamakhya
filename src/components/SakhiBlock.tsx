@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from "framer-motion";
 import { BookOpen } from 'lucide-react';
+import { getTodayMemory } from "../lib/memory";
 
 interface Message {
   role: 'sakhi' | 'user';
@@ -18,7 +19,7 @@ export function SakhiBlock({ onOpenJournal, currentPhase }: SakhiBlockProps) {
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // LOAD memory
+  /* ---------- LOAD CHAT MEMORY ---------- */
   useEffect(() => {
     const saved = localStorage.getItem("sakhi_messages");
 
@@ -40,7 +41,7 @@ export function SakhiBlock({ onOpenJournal, currentPhase }: SakhiBlockProps) {
     }
   }, []);
 
-  // SAVE memory
+  /* ---------- SAVE CHAT MEMORY ---------- */
   useEffect(() => {
     if (messages.length) {
       localStorage.setItem("sakhi_messages", JSON.stringify(messages));
@@ -52,14 +53,13 @@ export function SakhiBlock({ onOpenJournal, currentPhase }: SakhiBlockProps) {
   const suggestions = [
     'Plan your day',
     'Share something',
-    currentPhase === 'Menstrual'
+    currentPhase === 'Period'
       ? 'I need comfort today'
       : 'How should I nurture myself?',
   ];
 
+  /* ---------- SEND MESSAGE ---------- */
   const handleSend = async () => {
-    console.log("HANDLE SEND TRIGGERED");
-
     if (!input.trim()) return;
 
     const userText = input;
@@ -73,6 +73,15 @@ export function SakhiBlock({ onOpenJournal, currentPhase }: SakhiBlockProps) {
     setMessages(prev => [...prev, newMessage]);
     setInput('');
 
+    /* ⭐ Inject emotional memory context */
+    const today = getTodayMemory();
+
+    const context = {
+      mood: today.mood?.value ?? null,
+      reflection: today.journal.at(-1)?.text ?? null,
+      breathingDone: today.breathing.length > 0,
+    };
+
     try {
       const res = await fetch("https://project-kamakhya.vercel.app/api/sakhi", {
         method: "POST",
@@ -80,7 +89,8 @@ export function SakhiBlock({ onOpenJournal, currentPhase }: SakhiBlockProps) {
         body: JSON.stringify({
           message: userText,
           phase: currentPhase,
-          history: messages.slice(-6) // short context window
+          history: messages.slice(-6),
+          context,   // ⭐ THIS is the important addition
         })
       });
 
@@ -183,10 +193,7 @@ export function SakhiBlock({ onOpenJournal, currentPhase }: SakhiBlockProps) {
           />
 
           <button
-            onClick={() => {
-              console.log("BUTTON CLICKED");
-              handleSend();
-            }}
+            onClick={handleSend}
             className="px-6 py-3 rounded-full bg-white/10 border border-white/20"
             style={{ color: 'var(--kamakhya-moon-glow)' }}
           >
