@@ -74,7 +74,7 @@ export function SakhiBlock({ onOpenJournal, currentPhase }: SakhiBlockProps) {
     setInput('');
 
     try {
-      const res = await fetch("https://your-vercel-app.vercel.app/api/sakhi", {
+      const res = await fetch("https://project-kamakhya.vercel.app/api/sakhi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
