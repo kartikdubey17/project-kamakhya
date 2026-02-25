@@ -69,7 +69,7 @@ User message: ${message}
         console.error("SAKHI ERROR:", err);
 
         return res.status(500).json({
-            reply: "Sakhi lost her thread for a moment."
+            reply: "No api tokens left :("
         });
   }
 }
