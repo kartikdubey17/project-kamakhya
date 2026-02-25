@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+#root {
+  min-height: 100dvh;
+}
+
+:root {
+  --kamakhya-dark-bg: #140726;
+  --kamakhya-deep-plum: #2b0f4a;
+  --kamakhya-plum: #4c1d95;
+  --kamakhya-lavender: #a78bfa;
+  --kamakhya-rose: #f472b6;
+  --kamakhya-moon-glow: #fde68a;
+  --kamakhya-text-soft: #f5e9ff;
+}
