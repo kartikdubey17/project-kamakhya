@@ -65,10 +65,11 @@ User message: ${message}
     const reply = completion.choices[0].message.content;
 
     return res.status(200).json({ reply });
-  } catch (err) {
-    return res.status(200).json({
-      reply:
-        "I'm here with you. Sometimes my words take a quiet moment to arrive — tell me again.",
-    });
+  } catch (err: any) {
+        console.error("SAKHI ERROR:", err);
+
+        return res.status(500).json({
+            reply: "Sakhi lost her thread for a moment."
+        });
   }
 }
