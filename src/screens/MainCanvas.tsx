@@ -6,6 +6,8 @@ import { SakhiBlock } from "../components/SakhiBlock";
 import { JournalPanel } from "../components/JournalPanel";
 import { BreathingBlock } from "../components/BreathingBlock";
 import { getTodayMemory } from "../lib/memory";
+import { motion } from "framer-motion";
+
 
 interface UserData {
   name: string;
@@ -155,8 +157,13 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
       
 
   return (
-    <div className="min-h-screen p-6 bg-purple-950">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen p-6 bg-purple-950 relative">
+      <motion.div
+        className="kamakhya-mandala-bg"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 240, repeat: Infinity, ease: "linear" }}
+      />
+      <div className="max-w-2xl mx-auto space-y-6 relative z-10">
         <TopCycleBand
           cycleData={cycleData}
           onEditPeriod={() => setIsEditOpen(true)}
@@ -184,35 +191,58 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
       {isEditOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[2rem] p-8 space-y-6 bg-purple-900">
-            <input
-              type="date"
-              value={form.lastPeriodStart.split("T")[0]}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  lastPeriodStart: new Date(e.target.value).toISOString(),
-                })
-              }
-              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white"
-            />
+            <p className="text-lg text-purple-100 text-center">
+              Update your cycle details
+            </p>
 
-            <input
-              type="number"
-              value={form.cycleLength}
-              onChange={(e) =>
-                setForm({ ...form, cycleLength: e.target.value })
-              }
-              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white"
-            />
+            <div className="space-y-5">
 
-            <input
-              type="number"
-              value={form.periodDuration}
-              onChange={(e) =>
-                setForm({ ...form, periodDuration: e.target.value })
-              }
-              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white"
-            />
+              <div className="space-y-2">
+                <p className="text-sm text-purple-200 opacity-80">
+                  When was your last period?
+                </p>
+                <input
+                  type="date"
+                  value={form.lastPeriodStart.split("T")[0]}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      lastPeriodStart: new Date(e.target.value).toISOString(),
+                    })
+                  }
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm text-purple-200 opacity-80">
+                  How long did your period last?
+                </p>
+                <input
+                  type="number"
+                  value={form.periodDuration}
+                  onChange={(e) =>
+                    setForm({ ...form, periodDuration: e.target.value })
+                  }
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm text-purple-200 opacity-80">
+                  What's your usual cycle length?
+                </p>
+                <input
+                  type="number"
+                  value={form.cycleLength}
+                  onChange={(e) =>
+                    setForm({ ...form, cycleLength: e.target.value })
+                  }
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 text-white"
+                />
+              </div>
+
+            </div>
 
             <button
               onClick={() => setIsEditOpen(false)}

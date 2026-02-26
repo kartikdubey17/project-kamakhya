@@ -23,11 +23,13 @@ export function AuthScreen({ onSubmit }: AuthScreenProps) {
   return (
     <div
       className="fixed inset-0 flex items-center justify-center p-6"
+      
       style={{
         background:
           "linear-gradient(135deg, var(--kamakhya-deep-plum) 0%, var(--kamakhya-plum) 50%, var(--kamakhya-soft-lavender) 100%)",
       }}
     >
+      <div className="kamakhya-mandala-bg" />
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
@@ -47,14 +49,14 @@ export function AuthScreen({ onSubmit }: AuthScreenProps) {
             className="text-3xl mb-2 tracking-wide"
             style={{ color: "var(--kamakhya-moon-glow)" }}
           >
-            Project Kamakhya
+            Kamakhya
           </h1>
 
           <p
             className="text-sm opacity-90"
             style={{ color: "var(--kamakhya-text-soft)" }}
           >
-            Your menstrual wellbeing companion
+            Your menstrual emotional wellbeing companion
           </p>
         </div>
 

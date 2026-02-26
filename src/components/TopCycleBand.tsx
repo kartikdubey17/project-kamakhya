@@ -119,15 +119,20 @@ export function TopCycleBand({ cycleData, onEditPeriod }: TopCycleBandProps) {
                 {d.label}
               </p>
 
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center text-xl"
-                style={{
-                  background: d.isToday
-                    ? "var(--kamakhya-rose)"
-                    : "rgba(255,255,255,0.12)",
-                }}
-              >
-                {d.moon}
+              <div className="relative w-11 h-11 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full border border-white/20" />
+                <div className="absolute inset-1 rounded-full border border-white/10" />
+
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-xl"
+                  style={{
+                    background: d.isToday
+                      ? "var(--kamakhya-rose)"
+                      : "rgba(255,255,255,0.12)",
+                  }}
+                >
+                  {d.moon}
+                </div>
               </div>
             </div>
           ))}
