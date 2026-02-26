@@ -1,9 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-console.log("GEMINI EXISTS:", !!process.env.GEMINI_API_KEY);
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 export default async function handler(req: any, res: any) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -14,14 +10,17 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ message: "Method not allowed" });
 
   try {
-    const body =
-      typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    // 1. Move initialization INSIDE the handler to ensure env variables are loaded
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is missing from Vercel environment.");
+    }
 
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
     const { message, phase, history = [], context = {} } = body || {};
-
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-    });
 
     const prompt = `
 You are Sakhi, a gentle emotional companion inside a menstrual wellbeing space.
@@ -55,12 +54,13 @@ User message: ${message}
       "Sakhi is here quietly with you. Try again in a moment.";
 
     return res.status(200).json({ reply });
-  } catch (err) {
+  } catch (err: any) {
     console.error("SAKHI ERROR:", err);
 
     return res.status(500).json({
-      reply:
-        "Sakhi feels a little distant right now, but she hasn't gone anywhere. Try again gently.",
+      reply: "Sakhi feels a little distant right now, but she hasn't gone anywhere. Try again gently.",
+      // 2. Temporarily send the error back so you can debug it immediately
+      debugError: err.message || "Unknown error occurred" 
     });
   }
 }
