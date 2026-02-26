@@ -8,6 +8,14 @@ html, body, #root {
 }
 
 body {
+  background: var(--kamakhya-dark-bg);
+}
+
+html, body {
+  background: var(--kamakhya-dark-bg);
+}
+
+body {
   overflow-x: hidden;
 }
 #root {
@@ -19,6 +27,7 @@ body {
   --kamakhya-deep-plum: #2b0f4a;
   --kamakhya-plum: #4c1d95;
   --kamakhya-lavender: #a78bfa;
+  --kamakhya-soft-lavender: #c4b5fd;
   --kamakhya-rose: #f472b6;
   --kamakhya-moon-glow: #fde68a;
   --kamakhya-text-soft: #f5e9ff;
