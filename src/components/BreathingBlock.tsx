@@ -12,7 +12,7 @@ export function BreathingBlock() {
     if (!isActive) return;
 
     if (count >= 10) {
-      logBreathingSession("guided-breathing");   // ⭐ ONLY addition
+      logBreathingSession("guided-breathing");
       setFinished(true);
       setIsActive(false);
       return;
@@ -44,6 +44,7 @@ export function BreathingBlock() {
 
   return (
     <>
+      {/* small trigger card */}
       <motion.div
         onClick={start}
         whileHover={{ scale: 1.02 }}
@@ -78,8 +79,6 @@ export function BreathingBlock() {
           <motion.div
             className="fixed inset-0 z-[9999] flex items-center justify-center"
             style={{
-              top: 0,
-              left: 0,
               backdropFilter: "blur(12px)",
               background:
                 "linear-gradient(to bottom, rgba(20,10,30,0.95) 0%, rgba(20,10,30,0.7) 40%, rgba(20,10,30,0.6) 100%)"
@@ -88,8 +87,24 @@ export function BreathingBlock() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
+            {/* 🌙 giant faint mandala halo */}
             <motion.div
-              className="rounded-[2rem] p-10 text-center space-y-6"
+              className="absolute inset-0 pointer-events-none"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 240, repeat: Infinity, ease: "linear" }}
+              style={{
+                backgroundImage: "url('/mandala.svg')",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                backgroundSize: "800px",
+                opacity: 0.08,
+                
+              }}
+            />
+
+            {/* breathing content */}
+            <motion.div
+              className="relative z-10 rounded-[2rem] p-10 text-center space-y-6"
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
             >
@@ -99,7 +114,10 @@ export function BreathingBlock() {
                     animate={{
                       scale: phase === "in" ? 1.3 : 0.9,
                     }}
-                    transition={{ duration: phase === "in" ? 3 : 5, ease: "easeInOut" }}
+                    transition={{
+                      duration: phase === "in" ? 3 : 5,
+                      ease: "easeInOut",
+                    }}
                     className="w-32 h-32 rounded-full mx-auto"
                     style={{ background: "var(--kamakhya-rose)" }}
                   />

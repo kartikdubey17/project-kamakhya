@@ -26,11 +26,20 @@ export function TopCycleBand({ cycleData, onEditPeriod }: TopCycleBandProps) {
   return (
     <div
       className="relative overflow-hidden rounded-[2rem] p-8 mb-6"
+      
       style={{
         background:
           "linear-gradient(135deg, var(--kamakhya-plum), var(--kamakhya-lavender))",
       }}
     >
+      <img
+        src="/lotus.png"
+        className="absolute left-1/2 -translate-x-1/2 bottom-[-120px] w-[700px] pointer-events-none select-none opacity-25"
+        style={{
+          filter:
+            "invert(1) sepia(0.35) saturate(0.7) hue-rotate(330deg) brightness(0.9)blur(0.4px)",
+        }}
+      />
       {/* ambient glow */}
       <motion.div
         className="absolute inset-0 opacity-30 pointer-events-none"

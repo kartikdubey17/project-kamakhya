@@ -1,10 +1,8 @@
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-console.log("KEY EXISTS:", !!process.env.OPENAI_API_KEY);
+console.log("GEMINI EXISTS:", !!process.env.GEMINI_API_KEY);
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export default async function handler(req: any, res: any) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -21,13 +19,11 @@ export default async function handler(req: any, res: any) {
 
     const { message, phase, history = [], context = {} } = body || {};
 
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.7,
-      messages: [
-        {
-          role: "system",
-          content: `
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
+
+    const prompt = `
 You are Sakhi, a gentle emotional companion inside a menstrual wellbeing space.
 
 You are aware of:
@@ -40,36 +36,31 @@ Respond with emotional continuity and warmth.
 Do NOT repeatedly explain cycle phases unless relevant.
 Acknowledge coping efforts softly.
 Keep responses reflective, calming, and concise.
-`,
-        },
 
-        ...history.map((m: any) => ({
-          role: m.role === "sakhi" ? "assistant" : "user",
-          content: m.text,
-        })),
+Conversation history:
+${history.map((m: any) => `${m.role}: ${m.text}`).join("\n")}
 
-        {
-          role: "user",
-          content: `
 Cycle phase: ${phase}
 Mood today: ${context?.mood ?? "unknown"}
 Latest reflection: ${context?.reflection ?? "none"}
 Grounding attempted: ${context?.breathingDone ? "yes" : "no"}
 
 User message: ${message}
-`,
-        },
-      ],
-    });
+`;
 
-    const reply = completion.choices[0].message.content;
+    const result = await model.generateContent(prompt);
+
+    const reply =
+      result.response.text() ||
+      "Sakhi is here quietly with you. Try again in a moment.";
 
     return res.status(200).json({ reply });
-  } catch (err: any) {
-        console.error("SAKHI ERROR:", err);
+  } catch (err) {
+    console.error("SAKHI ERROR:", err);
 
-        return res.status(500).json({
-            reply: "No api tokens left :("
-        });
+    return res.status(500).json({
+      reply:
+        "Sakhi feels a little distant right now, but she hasn't gone anywhere. Try again gently.",
+    });
   }
 }
