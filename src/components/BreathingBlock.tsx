@@ -12,7 +12,8 @@ export function BreathingBlock() {
     if (!isActive) return;
 
     if (count >= 10) {
-      logBreathingSession("guided-breathing");
+      // Updated: Removed the "guided-breathing" string argument
+      logBreathingSession(); 
       setFinished(true);
       setIsActive(false);
       return;
@@ -44,7 +45,6 @@ export function BreathingBlock() {
 
   return (
     <>
-      {/* small trigger card */}
       <motion.div
         onClick={start}
         whileHover={{ scale: 1.02 }}
@@ -87,7 +87,6 @@ export function BreathingBlock() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* 🌙 giant faint mandala halo */}
             <motion.div
               className="absolute inset-0 pointer-events-none"
               animate={{ rotate: 360 }}
@@ -98,11 +97,9 @@ export function BreathingBlock() {
                 backgroundPosition: "center",
                 backgroundSize: "800px",
                 opacity: 0.08,
-                
               }}
             />
 
-            {/* breathing content */}
             <motion.div
               className="relative z-10 rounded-[2rem] p-10 text-center space-y-6"
               initial={{ scale: 0.9 }}

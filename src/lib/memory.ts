@@ -1,101 +1,77 @@
-const KEY = "kamakhya_memory";
-
-/* ---------- internal helpers ---------- */
-
-function getAllMemory() {
-  const raw = localStorage.getItem(KEY);
-  return raw ? JSON.parse(raw) : {};
-}
-
-function saveAllMemory(memory: any) {
-  localStorage.setItem(KEY, JSON.stringify(memory));
-}
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { supabase } from "./supabase";
 
 /* ---------- core API ---------- */
 
-export function getTodayMemory() {
-  const memory = getAllMemory();
-  const today = todayKey();
+// Fetches the profile (cycle data) for the logged-in user
+export async function getUserProfile() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
 
-  if (!memory[today]) {
-    memory[today] = {
-      mood: null,
-      journal: [],
-      breathing: [],
-      chatHighlights: []
-    };
-    saveAllMemory(memory);
-  }
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
 
-  return memory[today];
+  if (error && error.code !== 'PGRST116') console.error("Profile Error:", error);
+  return data;
 }
 
-export function updateTodayMemory(update: any) {
-  const memory = getAllMemory();
-  const today = todayKey();
+// Updates the profile (cycle length, period start, etc.)
+export async function updateUserSettings(updates: any) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-  memory[today] = {
-    ...getTodayMemory(),
-    ...update
-  };
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ id: user.id, ...updates });
 
-  saveAllMemory(memory);
+  if (error) console.error("Update Error:", error);
+}
+
+// Fetches all journal/mood/ritual entries for the user
+export async function getJournalHistory() {
+  const { data, error } = await supabase
+    .from('journal_entries')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) console.error("Journal Fetch Error:", error);
+  return data || [];
 }
 
 /* ---------- feature helpers ---------- */
 
-export function setMood(mood: string, intensity?: number) {
-  updateTodayMemory({
-    mood: {
-      value: mood,
-      intensity: intensity ?? null,
-      time: Date.now()
-    }
+export async function setMood(mood: string, tags: string[] = []) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.from('journal_entries').insert({
+    user_id: user.id,
+    type: 'mood',
+    content: mood,
+    tags: tags
   });
 }
 
-export function addJournalEntry(text: string) {
-  const today = getTodayMemory();
+export async function addJournalEntry(content: string, type: 'mood' | 'sakhi' | 'ritual' = 'mood') {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-  updateTodayMemory({
-    journal: [
-      ...today.journal,
-      {
-        text,
-        time: Date.now()
-      }
-    ]
+  await supabase.from('journal_entries').insert({
+    user_id: user.id,
+    type: type,
+    content: content
   });
 }
 
-export function logBreathingSession(type = "grounding") {
-  const today = getTodayMemory();
+export async function logBreathingSession() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-  updateTodayMemory({
-    breathing: [
-      ...today.breathing,
-      {
-        type,
-        time: Date.now()
-      }
-    ]
-  });
-}
-
-export function addChatHighlight(text: string) {
-  const today = getTodayMemory();
-
-  updateTodayMemory({
-    chatHighlights: [
-      ...today.chatHighlights,
-      {
-        text,
-        time: Date.now()
-      }
-    ]
+  await supabase.from('journal_entries').insert({
+    user_id: user.id,
+    type: 'ritual',
+    content: "Completed a calming breathing ritual 🌙"
   });
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Loader2 } from 'lucide-react';
+import { updateUserSettings } from "../lib/memory";
 
 interface OnboardingData {
   name: string;
@@ -11,11 +12,12 @@ interface OnboardingData {
 }
 
 interface OnboardingFlowProps {
-  onComplete: (data: OnboardingData) => void;
+  onComplete: () => void;
 }
 
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [step, setStep] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
   const [data, setData] = useState<OnboardingData>({
     name: '',
     dob: '',
@@ -59,11 +61,28 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   const currentQuestion = questions[step];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < questions.length - 1) {
       setStep(step + 1);
     } else {
-      onComplete(data);
+      setIsSaving(true);
+      try {
+        // Syncing with Supabase instead of just passing locally
+        await updateUserSettings({
+          name: data.name,
+          dob: data.dob,
+          last_period_start: new Date(data.lastPeriodStart).toISOString(),
+          cycle_length: data.cycleLength,
+          period_duration: data.periodDuration,
+          // Initialize period history with the first date provided
+          period_history: [new Date(data.lastPeriodStart).toISOString().split('T')[0]]
+        });
+        onComplete();
+      } catch (error) {
+        console.error("Failed to save onboarding data:", error);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -141,13 +160,19 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
               <button
                 onClick={handleNext}
-                disabled={!data[currentQuestion.field]}
+                disabled={!data[currentQuestion.field] || isSaving}
                 className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/20 backdrop-blur-md 
                            border border-white/30 hover:bg-white/30 transition-all disabled:opacity-40"
                 style={{ color: 'var(--kamakhya-moon-glow)' }}
               >
-                {step === questions.length - 1 ? 'Begin' : 'Next'}
-                <ChevronRight className="w-4 h-4" />
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    {step === questions.length - 1 ? 'Begin' : 'Next'}
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </div>
           </motion.div>

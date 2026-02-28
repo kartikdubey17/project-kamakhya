@@ -1,29 +1,45 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { supabase } from "../lib/supabase";
 
 interface AuthScreenProps {
-  onSubmit: () => void;
+  onLoginSuccess: () => void;
 }
 
-export function AuthScreen({ onSubmit }: AuthScreenProps) {
+export function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
   const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setStatus("loading");
+    setErrorMessage("");
 
-    if (email.trim().toLowerCase() === "demo@kamakhya.work") {
-      setError("");
-      onSubmit();
-    } else {
-      setError("Use demo@kamakhya.work to enter");
+    try {
+      // Logic for OTP/Magic Link
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          // window.location.origin ensures it works on local and deployed Vercel links
+          emailRedirectTo: window.location.origin,
+        },
+      });
+
+      if (error) throw error;
+      
+      setStatus("success");
+    } catch (error: any) {
+      console.error("Auth Error:", error);
+      setStatus("error");
+      // This often catches the "Failed to fetch" if the URL/Key in supabase.ts is wrong
+      setErrorMessage(error.message || "Failed to reach Kamakhya. Please check your connection.");
     }
   };
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center p-6"
-      
+      className="fixed inset-0 flex items-center justify-center p-6 z-50"
       style={{
         background:
           "linear-gradient(135deg, var(--kamakhya-deep-plum) 0%, var(--kamakhya-plum) 50%, var(--kamakhya-soft-lavender) 100%)",
@@ -34,7 +50,7 @@ export function AuthScreen({ onSubmit }: AuthScreenProps) {
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
-        className="w-full max-w-md"
+        className="w-full max-w-md relative z-10"
       >
         <div className="text-center mb-12">
           <motion.div
@@ -60,40 +76,51 @@ export function AuthScreen({ onSubmit }: AuthScreenProps) {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter demo email"
-            className="w-full px-6 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 
-                       focus:outline-none focus:border-white/40 transition-all placeholder-white/40"
-            style={{ color: "var(--kamakhya-text-soft)" }}
-            required
-          />
-
-          {error && (
-            <p className="text-xs text-center text-red-300">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            className="w-full py-4 rounded-full bg-white/20 backdrop-blur-md border border-white/30 
-                       hover:bg-white/30 transition-all"
-            style={{ color: "var(--kamakhya-moon-glow)" }}
+        {status === "success" ? (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="p-8 rounded-[2rem] bg-white/10 backdrop-blur-md border border-white/20 text-center space-y-4"
           >
-            Enter Kamakhya
-          </button>
-        </form>
+            <p className="text-lg" style={{ color: "var(--kamakhya-moon-glow)" }}>✨ Magic link sent</p>
+            <p className="text-sm leading-relaxed" style={{ color: "var(--kamakhya-text-soft)" }}>
+              Check <strong>{email}</strong> for your entry link. It might take a minute to arrive in your inbox or spam.
+            </p>
+          </motion.div>
+        ) : (
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="relative">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full px-6 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 
+                           focus:outline-none focus:border-white/40 transition-all placeholder-white/40 text-center"
+                style={{ color: "var(--kamakhya-text-soft)" }}
+                required
+              />
+            </div>
 
-        <div className="mt-6 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-          <p
-            className="text-xs text-center opacity-70"
-            style={{ color: "var(--kamakhya-text-soft)" }}
-          >
-            demo@kamakhya.work
-          </p>
-        </div>
+            {status === "error" && (
+              <motion.p 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="text-xs text-center text-red-300 bg-red-500/10 py-2 rounded-lg"
+              >
+                {errorMessage}
+              </motion.p>
+            )}
+
+            <button
+              type="submit"
+              disabled={status === "loading"}
+              className="w-full py-4 rounded-full bg-white/20 backdrop-blur-md border border-white/30 
+                         hover:bg-white/30 transition-all disabled:opacity-50 font-medium"
+              style={{ color: "var(--kamakhya-moon-glow)" }}
+            >
+              {status === "loading" ? "Summoning..." : "Enter Kamakhya"}
+            </button>
+          </form>
+        )}
       </motion.div>
     </div>
   );
