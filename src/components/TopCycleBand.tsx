@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Edit3 } from "lucide-react";
+import { Edit3, Droplets } from "lucide-react";
 
 interface RelativeDay {
   label: string;
@@ -15,18 +15,27 @@ interface CycleData {
   phaseLabel: string | null;
   userName: string;
   relativeDays: RelativeDay[];
+  showLogPeriod: boolean;
 }
 
 interface TopCycleBandProps {
   cycleData: CycleData;
   onEditPeriod: () => void;
+  onLogActivity: () => void;
+  onLogPeriod: () => void;
+  onOpenCalendar: () => void;
 }
 
-export function TopCycleBand({ cycleData, onEditPeriod }: TopCycleBandProps) {
+export function TopCycleBand({
+  cycleData,
+  onEditPeriod,
+  onLogActivity,
+  onLogPeriod,
+  onOpenCalendar,
+}: TopCycleBandProps) {
   return (
     <div
       className="relative overflow-hidden rounded-[2rem] p-8 mb-6"
-      
       style={{
         background:
           "linear-gradient(135deg, var(--kamakhya-plum), var(--kamakhya-lavender))",
@@ -39,6 +48,7 @@ export function TopCycleBand({ cycleData, onEditPeriod }: TopCycleBandProps) {
           filter:
             "invert(1) sepia(0.35) saturate(0.7) hue-rotate(330deg) brightness(0.9)blur(0.4px)",
         }}
+        alt="Lotus background"
       />
       {/* ambient glow */}
       <motion.div
@@ -70,23 +80,43 @@ export function TopCycleBand({ cycleData, onEditPeriod }: TopCycleBandProps) {
             </p>
           </div>
 
-          <button
-            onClick={onEditPeriod}
-            className="flex items-center gap-2 px-5 py-2 mr-2 -mt-1 rounded-full backdrop-blur-md border
-                      hover:scale-[1.03] transition-all"
-            style={{
-              background: "rgba(255,255,255,0.16)",
-              borderColor: "rgba(255,255,255,0.25)",
-              color: "var(--kamakhya-text-soft)",
-            }}
-          >
-            <Edit3 className="w-4 h-4 opacity-80" />
-            <span className="text-xs tracking-wide">Edit period</span>
-          </button>
+          <div className="flex flex-col gap-2 mr-2 -mt-1">
+            <button
+              onClick={onEditPeriod}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-full backdrop-blur-md border hover:scale-[1.03] transition-all"
+              style={{
+                background: "rgba(255,255,255,0.16)",
+                borderColor: "rgba(255,255,255,0.25)",
+                color: "var(--kamakhya-text-soft)",
+              }}
+            >
+              <Edit3 className="w-3 h-3 opacity-80" />
+              <span className="text-xs tracking-wide">Edit</span>
+            </button>
+
+            {/* Dynamic Action Button */}
+            {cycleData.showLogPeriod ? (
+              <button
+                onClick={onLogPeriod}
+                className="flex items-center justify-center gap-1 px-4 py-2 rounded-full shadow-lg hover:scale-[1.03] transition-all bg-red-500/80 text-white"
+              >
+                <Droplets className="w-3 h-3" />
+                <span className="text-[10px] font-bold tracking-wide uppercase">Log Period</span>
+              </button>
+            ) : (
+              <button
+                onClick={onLogActivity}
+                className="flex items-center justify-center gap-1 px-4 py-2 rounded-full shadow-lg hover:scale-[1.03] transition-all bg-pink-500/20 border border-pink-300/30 text-white"
+              >
+                <span className="text-xs">❤️</span>
+                <span className="text-[10px] tracking-wide">Activity</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* counter OR phase label */}
-        <div className="text-center -mt-1">
+        <div className="text-center -mt-2">
           {cycleData.counterValue !== null ? (
             <>
               <p
@@ -113,8 +143,12 @@ export function TopCycleBand({ cycleData, onEditPeriod }: TopCycleBandProps) {
           )}
         </div>
 
-        {/* moon strip */}
-        <div className="flex justify-center gap-4 mt-5 pb-1">
+        {/* moon strip (Now clickable) */}
+        <div 
+          className="flex justify-center gap-4 mt-5 pb-1 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={onOpenCalendar}
+          title="Open Calendar View"
+        >
           {cycleData.relativeDays.map((d, idx) => (
             <div key={idx} className="flex flex-col items-center">
               <p

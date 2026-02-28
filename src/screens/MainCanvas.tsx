@@ -7,7 +7,7 @@ import { JournalPanel } from "../components/JournalPanel";
 import { BreathingBlock } from "../components/BreathingBlock";
 import { getTodayMemory } from "../lib/memory";
 import { motion } from "framer-motion";
-
+import { X } from "lucide-react";
 
 interface UserData {
   name: string;
@@ -15,26 +15,34 @@ interface UserData {
   lastPeriodStart: string;
   cycleLength: string;
   periodDuration: string;
+  activityLogs: string[]; // ISO Date strings
+  periodHistory: string[]; // ISO Date strings
 }
 
 interface JournalEntry {
   date: Date;
-  type: "mood" | "sakhi";
+  type: "mood" | "sakhi" | "ritual";
   content: string;
   tags?: string[];
 }
 
-export function MainCanvas({ userData }: { userData?: UserData }) {
+export function MainCanvas({ userData }: { userData?: Partial<UserData> }) {
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
 
-  const safeUserData: UserData = userData ?? {
-    name: "Maya",
-    dob: "",
-    lastPeriodStart: new Date().toISOString(),
-    cycleLength: "28",
-    periodDuration: "5",
+  const todayDateString = new Date().toISOString().split("T")[0];
+
+  const safeUserData: UserData = {
+    name: userData?.name ?? "Maya",
+    dob: userData?.dob ?? "",
+    lastPeriodStart: userData?.lastPeriodStart ?? new Date().toISOString(),
+    cycleLength: userData?.cycleLength ?? "28",
+    periodDuration: userData?.periodDuration ?? "5",
+    activityLogs: userData?.activityLogs ?? [],
+    periodHistory: userData?.periodHistory ?? [userData?.lastPeriodStart ?? new Date().toISOString()],
   };
 
   const [form, setForm] = useState<UserData>(safeUserData);
@@ -88,7 +96,9 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
     } else {
       phaseLabel = phase + " phase";
     }
-  
+
+    // Determine if Log Period button should show (<= 2 days before, or during predicted period)
+    const showLogPeriod = daysToPeriod <= 2 || phase === "Period";
 
     const getMoon = (d: number) => {
       if (d <= periodDuration) return "🌑";
@@ -126,6 +136,8 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
       phaseLabel,
       userName: form.name,
       relativeDays,
+      showLogPeriod,
+      getMoon, // Exported for the calendar to use
     };
   };
 
@@ -138,23 +150,108 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
     ]);
   };
 
+  const handleLogActivity = () => {
+    if (!form.activityLogs.includes(todayDateString)) {
+      setForm((prev) => ({
+        ...prev,
+        activityLogs: [...prev.activityLogs, todayDateString],
+      }));
+    }
+  };
+
+  const handleLogPeriod = () => {
+    setForm((prev) => ({
+      ...prev,
+      lastPeriodStart: new Date().toISOString(),
+      periodHistory: [...prev.periodHistory, todayDateString],
+    }));
+  };
+
+  // NEW: Function to toggle activity for any specific date
+  const toggleActivityLog = (targetDateString: string) => {
+    setForm((prev) => {
+      const logs = prev.activityLogs || [];
+      const exists = logs.includes(targetDateString);
+      return {
+        ...prev,
+        activityLogs: exists
+          ? logs.filter((d) => d !== targetDateString) // Remove if exists
+          : [...logs, targetDateString], // Add if doesn't exist
+      };
+    });
+  };
+
   const today = getTodayMemory();
 
-      const entries = [
-        ...today.journal.map((j: any) => ({
-          date: new Date(j.time),
-          type: "mood",
-          content: j.text,
-        })),
+  const entries: JournalEntry[] = [
+    ...today.journal.map((j: any) => ({
+      date: new Date(j.time),
+      type: "mood" as const,
+      content: j.text,
+    })),
+    ...today.breathing.map((b: any) => ({
+      date: new Date(b.time),
+      type: "ritual" as const,
+      content: "Completed a calming breathing ritual 🌙",
+    })),
+  ];
 
-        ...today.breathing.map((b: any) => ({
-          date: new Date(b.time),   // ⭐ lowercase fixed
-          type: "ritual",
-          content: "Completed a calming breathing ritual 🌙",
-        })),
-      ];
+  /* -------- CALENDAR RENDER HELPER -------- */
+  const renderCalendarDays = () => {
+    const year = currentCalendarMonth.getFullYear();
+    const month = currentCalendarMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    
+    const days = [];
+    // Blanks before start of month
+    for (let i = 0; i < firstDayIndex; i++) {
+      days.push(<div key={`blank-${i}`} className="w-10 h-10" />);
+    }
 
+    const lastPeriodDate = new Date(form.lastPeriodStart);
+    const cycleLength = parseInt(form.cycleLength);
+    const periodDuration = parseInt(form.periodDuration);
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const dateObj = new Date(year, month, i);
+      // Adjust for local timezone to get correct YYYY-MM-DD string
+      const dateString = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+      const isFuture = dateObj > new Date(new Date().setHours(0,0,0,0)); // GREY OUT FUTURE DATES
       
+      // Calculate projected cycle day for this specific calendar date
+      const diff = Math.floor((dateObj.getTime() - lastPeriodDate.getTime()) / (1000 * 60 * 60 * 24));
+      const cycleDay = ((diff % cycleLength) + cycleLength) % cycleLength + 1;
+      
+      const moonPhase = cycleData.getMoon(cycleDay);
+      const isPeriodPredict = cycleDay <= periodDuration;
+      const isLoggedActivity = form.activityLogs.includes(dateString);
+      const isLoggedPeriod = form.periodHistory.includes(dateString);
+
+      days.push(
+        <div
+          key={`day-${i}`}
+          onClick={() => {
+            if (!isFuture) toggleActivityLog(dateString);
+          }}
+          title={isFuture ? "" : "Click to log/unlog ❤️ Activity"}
+          className={`relative w-10 h-10 flex flex-col items-center justify-center rounded-lg select-none ${
+            isFuture ? "opacity-30 cursor-not-allowed" : "hover:bg-white/10 cursor-pointer active:scale-95"
+          } transition-all`}
+        >
+          <span className="text-xs text-purple-200 z-10">{i}</span>
+          <span className="text-lg opacity-70 z-0 leading-none">{moonPhase}</span>
+          
+          {/* Indicators for Activity and Period */}
+          <div className="absolute bottom-[-4px] flex gap-[2px]">
+            {isLoggedActivity && <span className="text-[8px] animate-in zoom-in duration-200">❤️</span>}
+            {(isLoggedPeriod || isPeriodPredict) && <span className="text-[8px]">🩸</span>}
+          </div>
+        </div>
+      );
+    }
+    return days;
+  };
 
   return (
     <div className="min-h-screen p-6 bg-purple-950 relative">
@@ -167,6 +264,9 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
         <TopCycleBand
           cycleData={cycleData}
           onEditPeriod={() => setIsEditOpen(true)}
+          onLogActivity={handleLogActivity}
+          onLogPeriod={handleLogPeriod}
+          onOpenCalendar={() => setIsCalendarOpen(true)}
         />
 
         <JournalPanel
@@ -188,21 +288,30 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
         />
       </div>
 
+      {/* --- EDIT PERIOD MODAL --- */}
       {isEditOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[2rem] p-8 space-y-6 bg-purple-900">
-            <p className="text-lg text-purple-100 text-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-[2rem] p-8 space-y-6 bg-purple-900 relative">
+            
+            <button
+              onClick={() => setIsEditOpen(false)}
+              className="absolute top-5 right-5 p-2 rounded-full bg-white/10 text-purple-200 hover:bg-white/20 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <p className="text-lg text-purple-100 text-center mt-2">
               Update your cycle details
             </p>
 
             <div className="space-y-5">
-
               <div className="space-y-2">
                 <p className="text-sm text-purple-200 opacity-80">
                   When was your last period?
                 </p>
                 <input
                   type="date"
+                  max={todayDateString} // RESTRICTS FUTURE DATES
                   value={form.lastPeriodStart.split("T")[0]}
                   onChange={(e) =>
                     setForm({
@@ -210,7 +319,7 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
                       lastPeriodStart: new Date(e.target.value).toISOString(),
                     })
                   }
-                  className="w-full px-4 py-3 rounded-xl bg-white/10 text-white"
+                  className="w-full px-4 py-3 rounded-xl bg-white/10 text-white [&::-webkit-calendar-picker-indicator]:invert"
                 />
               </div>
 
@@ -241,15 +350,60 @@ export function MainCanvas({ userData }: { userData?: UserData }) {
                   className="w-full px-4 py-3 rounded-xl bg-white/10 text-white"
                 />
               </div>
-
             </div>
 
             <button
               onClick={() => setIsEditOpen(false)}
-              className="w-full py-3 rounded-full bg-pink-400"
+              className="w-full py-3 rounded-full bg-pink-400 font-medium hover:bg-pink-500 transition-colors"
             >
               Save
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- CALENDAR MODAL --- */}
+      {isCalendarOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="w-full max-w-sm rounded-[2rem] p-6 space-y-6 bg-purple-900 border border-purple-700 shadow-2xl relative">
+            
+            <button
+              onClick={() => setIsCalendarOpen(false)}
+              className="absolute top-5 right-5 p-2 rounded-full bg-black/20 text-purple-200 hover:bg-black/40 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex justify-between items-center pr-8">
+              <button 
+                onClick={() => setCurrentCalendarMonth(new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() - 1, 1))}
+                className="p-2 text-purple-300 hover:text-white"
+              >
+                &larr;
+              </button>
+              <h3 className="text-lg font-semibold text-purple-100">
+                {currentCalendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+              </h3>
+              <button 
+                onClick={() => setCurrentCalendarMonth(new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + 1, 1))}
+                className="p-2 text-purple-300 hover:text-white"
+              >
+                &rarr;
+              </button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-y-4 gap-x-2 text-center">
+              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                <div key={day} className="text-xs text-purple-400 font-medium">{day}</div>
+              ))}
+              {renderCalendarDays()}
+            </div>
+
+            <div className="flex gap-4 justify-center text-[10px] text-purple-300 pt-2 border-t border-purple-800 mt-2">
+              <span className="flex items-center gap-1">🌑 Period</span>
+              <span className="flex items-center gap-1">🌕 Ovulation</span>
+              <span className="flex items-center gap-1">❤️ Activity</span>
+            </div>
           </div>
         </div>
       )}

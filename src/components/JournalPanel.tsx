@@ -1,9 +1,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from 'lucide-react';
 
-interface JournalEntry {
+export interface JournalEntry {
   date: Date;
-  type: 'mood' | 'sakhi';
+  type: 'mood' | 'sakhi' | 'ritual'; // <-- Added 'ritual' here
   content: string;
   tags?: string[];
 }
@@ -62,7 +62,7 @@ export function JournalPanel({ isOpen, onClose, entries }: JournalPanelProps) {
                 <button
                   onClick={onClose}
                   className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center
-                             hover:bg-white/30 transition-all"
+                               hover:bg-white/30 transition-all"
                   style={{ color: 'var(--kamakhya-text-soft)' }}
                 >
                   <X className="w-5 h-5" />
@@ -91,15 +91,21 @@ export function JournalPanel({ isOpen, onClose, entries }: JournalPanelProps) {
                     >
                       <div className="flex justify-between items-start mb-2">
                         <span 
-                          className="text-xs px-3 py-1 rounded-full"
+                          className="text-xs px-3 py-1 rounded-full font-medium"
                           style={{
                             background: entry.type === 'mood' 
                               ? 'var(--kamakhya-rose)' 
-                              : 'var(--kamakhya-lavender)',
+                              : entry.type === 'sakhi'
+                              ? 'var(--kamakhya-lavender)'
+                              : '#93C5FD', // A soft, calming blue for rituals
                             color: 'var(--kamakhya-deep-plum)',
                           }}
                         >
-                          {entry.type === 'mood' ? 'Mood Log' : 'Sakhi Chat'}
+                          {entry.type === 'mood' 
+                            ? 'Mood Log' 
+                            : entry.type === 'sakhi' 
+                            ? 'Sakhi Chat' 
+                            : 'Breathing Ritual'}
                         </span>
                         <span className="text-xs opacity-70" style={{ color: 'var(--kamakhya-text-soft)' }}>
                           {formatDate(entry.date)}
