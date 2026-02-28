@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Vite naming convention
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// This will help you debug in the browser console
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("Supabase variables are missing! Check Vercel/Env settings.");
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
