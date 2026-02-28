@@ -5,9 +5,8 @@ import { ExercisesBlock } from "../components/ExercisesBlock";
 import { SakhiBlock } from "../components/SakhiBlock";
 import { JournalPanel, type JournalEntry } from "../components/JournalPanel";
 import { BreathingBlock } from "../components/BreathingBlock";
-import { getUserProfile, getJournalHistory, updateUserSettings, setMood } from "../lib/memory";
+import { getUserProfile, getJournalHistory,setMood } from "../lib/memory";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
 
 interface UserData {
   name: string;
@@ -26,11 +25,10 @@ export function MainCanvas() {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   
   const [isJournalOpen, setIsJournalOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
+  const [_isEditOpen, setIsEditOpen] = useState(false);
+  const [_isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [_currentCalendarMonth, _setCurrentCalendarMonth] = useState(new Date());
 
-  const todayDateString = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     setIsMounted(true);
