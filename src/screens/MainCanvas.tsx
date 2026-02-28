@@ -27,6 +27,14 @@ interface JournalEntry {
 }
 
 export function MainCanvas({ userData }: { userData?: Partial<UserData> }) {
+  // --- HYDRATION FIX ---
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  // ---------------------
+
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -252,6 +260,12 @@ export function MainCanvas({ userData }: { userData?: Partial<UserData> }) {
     }
     return days;
   };
+
+  // --- HYDRATION FIX RETURN ---
+  // If the component hasn't mounted in the browser yet, render nothing.
+  // This prevents the server HTML (UTC time) from mismatching the client HTML (local time).
+  if (!isMounted) return null;
+  // ----------------------------
 
   return (
     <div className="min-h-screen p-6 bg-purple-950 relative">
