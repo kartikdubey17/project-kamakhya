@@ -5,8 +5,8 @@ import { ExercisesBlock } from "../components/ExercisesBlock";
 import { SakhiBlock } from "../components/SakhiBlock";
 import { JournalPanel, type JournalEntry } from "../components/JournalPanel";
 import { BreathingBlock } from "../components/BreathingBlock";
-import { getUserProfile, getJournalHistory,setMood } from "../lib/memory";
-import { motion } from "framer-motion";
+import { getUserProfile, getJournalHistory, setMood} from "../lib/memory";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface UserData {
   name: string;
@@ -26,9 +26,7 @@ export function MainCanvas() {
   
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [_isEditOpen, setIsEditOpen] = useState(false);
-  const [_isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [_currentCalendarMonth, _setCurrentCalendarMonth] = useState(new Date());
-
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -54,14 +52,19 @@ export function MainCanvas() {
   }
 
   const calculateCycleData = () => {
-    if (!userData) return null;
+    if (!userData || !userData.lastPeriodStart) return null;
 
     const last = new Date(userData.lastPeriodStart);
     const today = new Date();
-    const diff = Math.floor((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Fix NaN: Ensure dates are valid before math
+    if (isNaN(last.getTime())) return null;
 
-    const cycleLength = parseInt(userData.cycleLength);
-    const periodDuration = parseInt(userData.periodDuration);
+    const diff = Math.floor((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+    const cycleLength = parseInt(userData.cycleLength) || 28;
+    const periodDuration = parseInt(userData.periodDuration) || 5;
+    
+    // Normalized day in cycle (1 to cycleLength)
     const day = ((diff % cycleLength) + cycleLength) % cycleLength + 1;
     const ovulationDay = Math.floor(cycleLength / 2);
 
@@ -99,7 +102,6 @@ export function MainCanvas() {
       userName: userData.name,
       relativeDays,
       showLogPeriod,
-      getMoon,
       counterValue: daysToPeriod <= 7 ? daysToPeriod : null,
       counterLabel: "Period" as const,
       phaseLabel: `${phase} phase`
@@ -108,32 +110,27 @@ export function MainCanvas() {
 
   const cycleData = calculateCycleData();
 
-  const handleMoodLog = async (mood: string, _feeling: string, tags: string[]) => {
-    await setMood(mood, tags);
-    loadInitialData(); // Refresh history from Supabase
-  };
-
   if (!isMounted || loading || !userData || !cycleData) {
     return <div className="min-h-screen bg-purple-950 flex items-center justify-center text-white">Connecting to Kamakhya...</div>;
   }
 
   return (
-    <div className="min-h-screen p-6 bg-purple-950 relative">
+    <div className="min-h-screen p-6 bg-purple-950 relative overflow-x-hidden">
       <motion.div className="kamakhya-mandala-bg" animate={{ rotate: 360 }} transition={{ duration: 240, repeat: Infinity, ease: "linear" }} />
       
       <div className="max-w-2xl mx-auto space-y-6 relative z-10">
         <TopCycleBand
           cycleData={cycleData}
           onEditPeriod={() => setIsEditOpen(true)}
-          onLogActivity={() => {}} 
-          onLogPeriod={() => {}} 
+          onLogActivity={() => {/* Logic to add to activityLogs */}} 
+          onLogPeriod={() => {/* Logic to mark start of period */}} 
           onOpenCalendar={() => setIsCalendarOpen(true)}
         />
 
         <JournalPanel isOpen={isJournalOpen} onClose={() => setIsJournalOpen(false)} entries={journalEntries} />
 
         <div className="grid grid-cols-2 gap-4">
-          <MoodBlock onMoodLog={handleMoodLog} />
+          <MoodBlock onMoodLog={async (m,_f,t) => { await setMood(m, t); loadInitialData(); }} />
           <ExercisesBlock currentPhase={cycleData.phase} />
         </div>
 
@@ -141,8 +138,20 @@ export function MainCanvas() {
 
         <SakhiBlock onOpenJournal={() => setIsJournalOpen(true)} currentPhase={cycleData.phase} />
       </div>
-      
-      {/* ... Edit and Calendar modals remain same, but use updateUserSettings(form) on save ... */}
+
+      {/* Calendar Overlay Placeholder */}
+      <AnimatePresence>
+        {isCalendarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-purple-950/90 backdrop-blur-xl p-8"
+          >
+             <button onClick={() => setIsCalendarOpen(false)} className="absolute top-8 right-8 text-white text-2xl">✕</button>
+             <h2 className="text-white text-3xl mb-8">Cycle History</h2>
+             {/* Integrate your Calendar UI here */}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
