@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, X } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { supabase } from "../lib/supabase";
-import { createPortal } from 'react-dom';
 
+// Removed X and createPortal imports as they were unused
 interface Message {
   role: 'sakhi' | 'user';
   text: string;

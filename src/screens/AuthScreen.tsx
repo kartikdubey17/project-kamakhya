@@ -6,7 +6,7 @@ interface AuthScreenProps {
   onLoginSuccess: () => void;
 }
 
-export function AuthScreen({ onLoginSuccess }: AuthScreenProps) {
+export function AuthScreen({ }: AuthScreenProps) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
